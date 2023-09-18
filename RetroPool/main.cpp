@@ -99,7 +99,7 @@ int main()
     processNodes.push(temphead);
     int dir = 0;
     directionAvilib dirAvilib;
-   // std::srand(std::time(nullptr));
+    std::srand(std::time(nullptr));
     sf::Vector2i head(0, 0);
     bool start = false;
     while (window.isOpen())
