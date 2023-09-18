@@ -60,19 +60,19 @@ int main2()
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(610, 610), "Maze generation!");
-    window.setFramerateLimit(120);
-    sf::RectangleShape cell(sf::Vector2f(10.0f, 10.0f));
+    //window.setFramerateLimit(120);
+    sf::RectangleShape cell(sf::Vector2f(6.0f, 6.0f));
     sf::Clock clock;
     sf::Time time;
-    float count = 0;
+    bool oneTimeStamp = true;
 
     cell.setPosition(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
 
     std::vector<std::vector<sf::Vector2f>> cellsPostions;
     std::vector<std::vector<char>> type;
 
-    int width = 60;
-    int height = 60;
+    int width = (610 - 10) / cell.getSize().x;
+    int height = (610 - 10) / cell.getSize().y;
 
     type.resize(height);
     for (int y = 0; y < height; y++)
@@ -89,18 +89,17 @@ int main()
         cellsPostions[y].resize(width);
         for (int x = 0; x < width; x++)
         {
-            sf::Vector2f newPos = sf::Vector2f(x * 10 + OFFSET_FOR_MAZE_CENTER, y * 10 + OFFSET_FOR_MAZE_CENTER);
+            sf::Vector2f newPos = sf::Vector2f(x * cell.getSize().x + OFFSET_FOR_MAZE_CENTER, y * cell.getSize().y + OFFSET_FOR_MAZE_CENTER);
             cellsPostions[y][x] = newPos;
         }
     }
-
     sf::Vector2i temphead(0,0);
-
+    std::vector<int> nums;
     std::stack<sf::Vector2i> processNodes;
     processNodes.push(temphead);
     int dir = 0;
     directionAvilib dirAvilib;
-    std::srand(std::time(nullptr));
+   // std::srand(std::time(nullptr));
     sf::Vector2i head(0, 0);
     bool start = false;
     while (window.isOpen())
@@ -141,6 +140,7 @@ int main()
             else if (type[head.y][head.x + 2] == '#')
             {
                 dirAvilib.dir[4] = true;
+                nums.push_back(4);
             }
 
             if (head.y + 2 >= height)
@@ -149,6 +149,7 @@ int main()
             else if (type[head.y + 2][head.x] == '#')
             {
                 dirAvilib.dir[3] = true;
+                nums.push_back(3);
             }
 
             if (head.x - 2 < 0)
@@ -157,6 +158,7 @@ int main()
             else if (type[head.y][head.x - 2] == '#')
             {
                 dirAvilib.dir[2] = true;
+                nums.push_back(2);
             }
 
             if (head.y - 2 < 0)
@@ -165,8 +167,8 @@ int main()
             else if (type[head.y - 2][head.x] == '#')
             {
                 dirAvilib.dir[1] = true;
+                nums.push_back(1);
             }
-
 
             if (!dirAvilib.dir[1] &&
                 !dirAvilib.dir[2] &&
@@ -174,18 +176,21 @@ int main()
                 !dirAvilib.dir[4])
             {
                 dirAvilib.dir[0] = true;
-            }
-
-            do
-            {
-                dir = std::rand() % 5;
-                if (dirAvilib.dir[0])
+                dir = 0;
+            } else {
+                do
                 {
-                    dir = 0;
-                    break;
-                }
-            } while (!dirAvilib.dir[dir]);
+                    if (nums.size() == 1)
+                    {
+                        dir = nums[0];
+                    } else
+                    {
+                        dir = nums[std::rand() % nums.size()];
+                    }
+                    nums.clear();
 
+                } while (!dirAvilib.dir[dir]);
+            }
             type[head.y][head.x] = '0';
             switch (static_cast<directions>(dir))
             {
@@ -225,6 +230,12 @@ int main()
             }
             }
         }
+        else if (oneTimeStamp && start)
+        {
+            time = clock.getElapsedTime();
+            oneTimeStamp = false;
+            std::cout << time.asSeconds();
+        } else {clock.restart(); }
         
         window.clear();
         for (int y = 0; y < height;y++)
