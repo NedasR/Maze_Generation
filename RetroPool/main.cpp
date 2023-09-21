@@ -19,8 +19,9 @@ struct directionAvilib
 
 int main2()
 {
+    
     std::vector<float> num;
-    sf::RenderWindow window(sf::VideoMode(400, 400), "SFML works!");
+    sf::RenderWindow window(sf::VideoMode(400,400), "SFML works!");
     window.setFramerateLimit(60);
     sf::RectangleShape a(sf::Vector2f(10.0f,10.0f));
     num.push_back(220);
@@ -59,20 +60,24 @@ int main2()
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(610, 610), "Maze generation!");
+    sf::Texture mazeTex;
+    sf::Image mazeImage;
+    mazeImage.create(6, 6, sf::Color::White);
+    sf::RenderWindow window(sf::VideoMode(600, 600), "Maze generation!" /*sf::Style::Fullscreen*/);;
+    std::cout << mazeTex.create(window.getSize().x, window.getSize().y) << std::endl;
     //window.setFramerateLimit(120);
-    sf::RectangleShape cell(sf::Vector2f(6.0f, 6.0f));
+    sf::RectangleShape cell(sf::Vector2f(window.getSize().x, window.getSize().y));
+    cell.setPosition(sf::Vector2f(0.0f,0.0f));
+    cell.setTexture(&mazeTex);
     sf::Clock clock;
     sf::Time time;
     bool oneTimeStamp = true;
 
-    cell.setPosition(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
-
-    std::vector<std::vector<sf::Vector2f>> cellsPostions;
     std::vector<std::vector<char>> type;
 
-    int width = (610 - 10) / cell.getSize().x;
-    int height = (610 - 10) / cell.getSize().y;
+    int Cellsize = mazeImage.getSize().x;
+    int width = window.getSize().x;
+    int height = window.getSize().y;
 
     type.resize(height);
     for (int y = 0; y < height; y++)
@@ -83,16 +88,7 @@ int main()
             type[y][x] = '#';
         }
     }
-    cellsPostions.resize(height);
-    for (int y = 0; y < height; y++)
-    {   
-        cellsPostions[y].resize(width);
-        for (int x = 0; x < width; x++)
-        {
-            sf::Vector2f newPos = sf::Vector2f(x * cell.getSize().x + OFFSET_FOR_MAZE_CENTER, y * cell.getSize().y + OFFSET_FOR_MAZE_CENTER);
-            cellsPostions[y][x] = newPos;
-        }
-    }
+
     sf::Vector2i temphead(0,0);
     std::vector<int> nums;
     std::stack<sf::Vector2i> processNodes;
@@ -102,8 +98,10 @@ int main()
     std::srand(std::time(nullptr));
     sf::Vector2i head(0, 0);
     bool start = false;
+    int condition = 0;
     while (window.isOpen())
     {
+        condition++;
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -122,6 +120,10 @@ int main()
                         start = false;
                     }
                 }
+                if (event.key.code == sf::Keyboard::Escape)
+                {
+                    window.close();
+                }
             }
         }
         if (!processNodes.empty() && start)
@@ -134,41 +136,42 @@ int main()
             dirAvilib.dir[3] = false;
             dirAvilib.dir[4] = false;
 
-            if (head.x + 2 >= width)
+            if (head.x + Cellsize * 2 >= width)
             {
             }
-            else if (type[head.y][head.x + 2] == '#')
+            else if (type[head.y][head.x + Cellsize * 2] == '#')
             {
                 dirAvilib.dir[4] = true;
                 nums.push_back(4);
             }
 
-            if (head.y + 2 >= height)
+            if (head.y + Cellsize * 2 >= height)
             {
             }
-            else if (type[head.y + 2][head.x] == '#')
+            else if (type[head.y + Cellsize * 2][head.x] == '#')
             {
                 dirAvilib.dir[3] = true;
                 nums.push_back(3);
             }
 
-            if (head.x - 2 < 0)
+            if (head.x - Cellsize * 2 < 0)
             {
             }
-            else if (type[head.y][head.x - 2] == '#')
+            else if (type[head.y][head.x - Cellsize * 2] == '#')
             {
                 dirAvilib.dir[2] = true;
                 nums.push_back(2);
             }
 
-            if (head.y - 2 < 0)
+            if (head.y - Cellsize * 2 < 0)
             {
             }
-            else if (type[head.y - 2][head.x] == '#')
+            else if (type[head.y - Cellsize * 2][head.x] == '#')
             {
                 dirAvilib.dir[1] = true;
                 nums.push_back(1);
             }
+
 
             if (!dirAvilib.dir[1] &&
                 !dirAvilib.dir[2] &&
@@ -192,6 +195,7 @@ int main()
                 } while (!dirAvilib.dir[dir]);
             }
             type[head.y][head.x] = '0';
+
             switch (static_cast<directions>(dir))
             {
             case directions::NONE:
@@ -199,33 +203,43 @@ int main()
                 processNodes.pop();
                 break;
             }
+            
+
             case directions::up:
             {
-                type[head.y - 1][head.x] = '0';
-                type[head.y - 2][head.x] = '0';
-                processNodes.push(sf::Vector2i(head.x, head.y - 2));
+                type[head.y - Cellsize][head.x] = '0';
+                type[head.y - Cellsize * 2][head.x] = '0';
+                processNodes.push(sf::Vector2i(head.x, head.y - Cellsize * 2));
+                mazeTex.update(mazeImage, head.x, head.y - Cellsize);
+                mazeTex.update(mazeImage, head.x, head.y - Cellsize * 2);
                 break;
             }
             case directions::left:
             {
-                type[head.y][head.x - 1] = '0';
-                type[head.y][head.x - 2] = '0';
-                processNodes.push(sf::Vector2i(head.x - 2, head.y));
+                type[head.y][head.x - Cellsize] = '0';
+                type[head.y][head.x - Cellsize * 2] = '0';
+                processNodes.push(sf::Vector2i(head.x - Cellsize * 2, head.y));
+                mazeTex.update(mazeImage, head.x - Cellsize, head.y);
+                mazeTex.update(mazeImage, head.x - Cellsize * 2, head.y);
                 break;
             }
+
             case directions::down:
             {
-                type[head.y + 1][head.x] = '0';
-                type[head.y + 2][head.x] = '0';
-                processNodes.push(sf::Vector2i(head.x, head.y + 2));
+                type[head.y + Cellsize][head.x] = '0';
+                type[head.y + Cellsize * 2][head.x] = '0';
+                processNodes.push(sf::Vector2i(head.x, head.y + Cellsize * 2));
+                mazeTex.update(mazeImage, head.x, head.y + Cellsize);
+                mazeTex.update(mazeImage, head.x, head.y + Cellsize * 2);
                 break;
             }
             case directions::right:
             {
-                type[head.y][head.x + 1] = '0';
-                type[head.y][head.x + 2] = '0';
-                processNodes.push(sf::Vector2i(head.x + 2, head.y));
-
+                type[head.y][head.x + Cellsize] = '0';
+                type[head.y][head.x + Cellsize * 2] = '0';
+                processNodes.push(sf::Vector2i(head.x + Cellsize * 2, head.y));
+                mazeTex.update(mazeImage, head.x + Cellsize, head.y);
+                mazeTex.update(mazeImage, head.x + Cellsize * 2, head.y );
                 break;
             }
             }
@@ -236,22 +250,24 @@ int main()
             oneTimeStamp = false;
             std::cout << time.asSeconds();
         } else {clock.restart(); }
-        
-        window.clear();
-        for (int y = 0; y < height;y++)
+        if(condition % 3 == 0)
         {
-            for (int x = 0; x < width; x++)
+
+            window.clear();
+            for (int y = 0; y < 1; y++)
             {
-                cell.setFillColor(sf::Color::White);
-                if (type[y][x] == '#')
+                for (int x = 0; x < 1; x++)
                 {
-                    cell.setFillColor(sf::Color::Black);
+
+                    if (type[y][x] == '#')
+                    {
+                        continue;
+                    }
+                    window.draw(cell);
                 }
-                cell.setPosition(cellsPostions[y][x].x, cellsPostions[y][x].y);
-                window.draw(cell);
             }
+            window.display();
         }
-        window.display();
     }
 
     return 0;
